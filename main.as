@@ -70,7 +70,7 @@ void Render()
             isNewStunt = false;
         }
         nvg::BeginPath();
-        nvg::FontSize((Draw::GetWidth() / 45));
+        nvg::FontSize(Draw::GetWidth() / 45);
         nvg::FillColor(fillColor);
         auto bounds = nvg::TextBounds(currentText);
         // ty auris and chips for the .contains
