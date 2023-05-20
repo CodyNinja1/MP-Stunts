@@ -1,69 +1,36 @@
-auto playground;
-auto ScriptAPI;
 string currentStunt;
 string currentText;
 string previousText = "";
-int stuntAngle;
-int stuntCombo;
+int stuntAngle = 0;
+int stuntCombo = 0;
+int stuntPoints = 0;
+int stuntPointsIncrease = 0;
+int stuntPointsNow = 0;
+int stuntPointsPrev = 0;
 int previousTime = 0;
 bool isNewStunt = false;
+bool instantStunt = false;
 bool isMaster;
 
 void Main() {  }
 
-float now()
+void UpdateStuntVars() 
 {
-    return Math::Round(Time::get_Now() / 1000);
+    auto playground = cast<CGamePlayground>(cast<CGameCtnApp>(GetApp()).CurrentPlayground);
+    auto ScriptAPI = cast<CTrackManiaPlayer>(playground.Players[0]).ScriptAPI;
+    // tostring because ScriptAPI.StuntLast is an int of enum ESceneVehiclePhyStuntFigure
+    currentStunt = tostring(ScriptAPI.StuntLast);
+    stuntAngle = ScriptAPI.StuntAngle;
+    stuntCombo = ScriptAPI.StuntCombo;
+    stuntPointsIncrease = ScriptAPI.StuntPoints;
+    isMaster = ScriptAPI.StuntMasterJump;
 }
 
-string getStuntName(int Stunt) 
-{
-    string[] stunts;
-    stunts.InsertLast("None");
-    stunts.InsertLast("Straight Jump");
-    stunts.InsertLast("Flip");
-    stunts.InsertLast("Backflip");
-    stunts.InsertLast("Spin");
-    stunts.InsertLast("Aerial");
-    stunts.InsertLast("Alley Oop");
-    stunts.InsertLast("Roll");
-    stunts.InsertLast("Corkscrew");
-    stunts.InsertLast("Spin-off");
-    stunts.InsertLast("Rodeo");
-    stunts.InsertLast("Flip-flap");
-    stunts.InsertLast("Twister");
-    stunts.InsertLast("Freestyle");
-    stunts.InsertLast("Spinning Mix");
-    stunts.InsertLast("Flipping Chaos");
-    stunts.InsertLast("Rolling Madness");
-    stunts.InsertLast("Wreck");
-    stunts.InsertLast("Wrecking Straight Jump");
-    stunts.InsertLast("Wrecking Flip");
-    stunts.InsertLast("Wrecking Backflip");
-    stunts.InsertLast("Wrecking Spin");
-    stunts.InsertLast("Wrecking Aerial");
-    stunts.InsertLast("Wrecking Alley Oop");
-    stunts.InsertLast("Wrecking Roll");
-    stunts.InsertLast("Wrecking Corkscrew");
-    stunts.InsertLast("Wrecking Spinoff");
-    stunts.InsertLast("Wrecking Rodeo");
-    stunts.InsertLast("Wrecking Flip-flap");
-    stunts.InsertLast("Wrecking Twister");
-    stunts.InsertLast("Wrecking Freestyle");
-    stunts.InsertLast("Wrecking Spinning Mix");
-    stunts.InsertLast("Wrecking Flipping Chaos");
-    
-    if (Math::Rand(0, 999) == 0) {
-        stunts.InsertLast("Rick Rolling Madness");
-    } else {
-        stunts.InsertLast("Wrecking Roll Madness");
-    }
-    stunts.InsertLast("Time Penalty");
-    stunts.InsertLast("Respawn Penalty");
-    stunts.InsertLast("Grind");
-    stunts.InsertLast("Reset");
 
-    return stunts[Stunt];
+float now()
+{
+    // i did this because im tired af
+    return Math::Round(Time::get_Now() / 1000);
 }
 
 
@@ -71,50 +38,58 @@ void Render()
 {
     try 
     {
-        print(now() + ", " + previousTime + ", " + (previousTime == (now() - 5)));
+        UpdateStuntVars();
+        stuntPointsNow = stuntPoints;
+
+        auto app = cast<CGameCtnApp>(GetApp());
+        auto decorationName = app.RootMap.DecorationName;
+        vec4 fillColor = (decorationName != "Night48" ? s_dayColor : s_nightColor);
         currentText = StuntText();
         if (previousText != currentText) 
         {
             isNewStunt = true;
+            instantStunt = true;
             previousTime = now();
+        }
+        if (instantStunt) 
+        { 
+            stuntPoints += stuntPointsIncrease;
+            instantStunt = false;
+        }
+        if (stuntPointsIncrease == 0)
+        {
+            stuntPoints = 0;
+            stuntPointsPrev = 0; 
+            stuntPointsNow = 0;
         }
         else if (previousTime == (now() - 5))
         {
             isNewStunt = false;
         }
-        // ty auris and chips for the tip
+        nvg::BeginPath();
+        nvg::FontSize((Draw::GetWidth() / 45));
+        nvg::FillColor(fillColor);
+        auto bounds = nvg::TextBounds(currentText);
+        // ty auris and chips for the .contains
         if (!currentStunt.Contains("StraightJump") and isNewStunt) 
         {
-            nvg::BeginPath();
-            nvg::FontSize((Draw::GetWidth() / 45));
-            auto bounds = nvg::TextBounds(currentText);
             nvg::Text((Draw::GetWidth() / 2) - (bounds.x / 2), Draw::GetHeight() / 5, currentText);
-            nvg::FillColor(vec4(0, 0, 0, 0));
-            nvg::ClosePath();
+            if (s_stuntPoints and stuntPointsIncrease != 0) 
+            {
+                bounds = nvg::TextBounds(stuntIncreaseDecrease(stuntPointsPrev, stuntPointsNow));
+                nvg::Text((Draw::GetWidth() / 2) - bounds.x, Draw::GetHeight() / 4, stuntIncreaseDecrease(stuntPointsPrev, stuntPointsNow));
+            }
+        }
+        if (s_stuntPoints) 
+        {
+            bounds = nvg::TextBounds(tostring(stuntPoints));
+            nvg::Text(((Draw::GetWidth()) - bounds.x) - (Draw::GetWidth() / 20), Draw::GetHeight() / 3, tostring(stuntPoints));
+        }
+        nvg::ClosePath();
+        if (stuntPointsNow > stuntPointsPrev) 
+        {
+            stuntPointsPrev = stuntPointsNow;
         }
         previousText = currentText;
     } catch { }
-}
-
-string StuntText() {
-    auto playground = cast<CGamePlayground>(cast<CGameCtnApp>(GetApp()).CurrentPlayground);
-    auto ScriptAPI = cast<CTrackManiaPlayer>(playground.Players[0]).ScriptAPI;
-    currentStunt = tostring(ScriptAPI.StuntLast);
-    int stuntAngle = ScriptAPI.StuntAngle;
-    int stuntCombo = ScriptAPI.StuntCombo;
-    bool isMaster = ScriptAPI.StuntMasterJump;
-    string tmp = " ";
-    for (int i = 0; i <= (stuntAngle / 180 - 1); i++) 
-    {
-        tmp = tmp + "!";        
-    }
-    string exclamationMarks = (stuntAngle >= 720 ? " !!!!" : tmp);
-
-    return (currentStunt == "None" ? "" : 
-    (stuntCombo > 0 ? ((stuntCombo + 1) + "X Chained ") : "") 
-    + (tostring(isMaster) == "true" ? "Master " : "")
-    + getStuntName(ScriptAPI.StuntLast) 
-    + " " 
-    + (tostring(stuntAngle) == "0" ? "" : tostring(stuntAngle)) 
-    + exclamationMarks);
 }
