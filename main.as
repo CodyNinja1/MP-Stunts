@@ -84,6 +84,7 @@ void Render()
         {
             bounds = nvg::TextBounds(tostring(stuntPoints));
             nvg::Text(((Draw::GetWidth()) - bounds.x) - (Draw::GetWidth() / 20), Draw::GetHeight() / 3, tostring(stuntPoints));
+            nvg::Fill();
         }
         nvg::ClosePath();
         if (stuntPointsNow > stuntPointsPrev) 
