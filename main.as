@@ -11,6 +11,7 @@ int previousTime = 0;
 bool isNewStunt = false;
 bool instantStunt = false;
 bool isMaster;
+bool isEnabled;
 
 void Main() {  }
 
@@ -38,6 +39,7 @@ void Render()
 {
     try 
     {
+        if (!isEnabled) return;
         UpdateStuntVars();
         stuntPointsNow = stuntPoints;
 
@@ -61,6 +63,7 @@ void Render()
             stuntPoints = 0;
             stuntPointsPrev = 0; 
             stuntPointsNow = 0;
+            isNewStunt = false;
         }
         else if (previousTime == (now() - 5))
         {
@@ -71,20 +74,20 @@ void Render()
         nvg::FillColor(fillColor);
         auto bounds = nvg::TextBounds(currentText);
         // ty auris and chips for the .contains
-        if (!currentStunt.Contains("StraightJump") and isNewStunt) 
+        bool shouldStraightJump = s_stuntPoints or !currentStunt.Contains("StraightJump");
+        if (shouldStraightJump and isNewStunt) 
         {
             nvg::Text((Draw::GetWidth() / 2) - (bounds.x / 2), Draw::GetHeight() / 5, currentText);
-            if (s_stuntPoints and stuntPointsIncrease != 0) 
+            if (s_stuntPoints) 
             {
-                bounds = nvg::TextBounds(stuntIncreaseDecrease(stuntPointsPrev, stuntPointsNow));
-                nvg::Text((Draw::GetWidth() / 2) - bounds.x, Draw::GetHeight() / 4, stuntIncreaseDecrease(stuntPointsPrev, stuntPointsNow));
+                bounds = nvg::TextBounds("+" + tostring(stuntPointsIncrease));
+                nvg::Text((Draw::GetWidth() / 2) - (bounds.x / 2), Draw::GetHeight() / 4, "+" + tostring(stuntPointsIncrease));
             }
         }
         if (s_stuntPoints) 
         {
             bounds = nvg::TextBounds(tostring(stuntPoints));
-            nvg::Text(((Draw::GetWidth()) - bounds.x) - (Draw::GetWidth() / 20), Draw::GetHeight() / 3, tostring(stuntPoints));
-            nvg::Fill();
+            nvg::Text(((Draw::GetWidth()) - bounds.x) - (Draw::GetWidth() / 20), Draw::GetHeight() / 3, tostring(stuntPoints) + " Pts.");
         }
         nvg::ClosePath();
         if (stuntPointsNow > stuntPointsPrev) 
@@ -93,4 +96,13 @@ void Render()
         }
         previousText = currentText;
     } catch { }
+}
+
+
+void RenderMenu()
+{
+    if (UI::MenuItem("\\$ff3" + Icons::Plus + "\\$z StuntMaster", "", isEnabled)) 
+    {
+        isEnabled = !isEnabled;
+    }
 }
