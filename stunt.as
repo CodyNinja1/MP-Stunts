@@ -26,17 +26,6 @@ string StuntText() {
     + exclamationMarks);
 }
 
-string stuntIncreaseDecrease(int prev, int now) 
-{
-    if (prev == now) {
-        return "";
-    } else if (prev < now) {
-        return "+" + (now - prev);
-    }
-    return "UHHHHHHHHHHHHHHH";
-}
-
-
 string getStuntName(int Stunt) 
 {
     string[] stunts;
