@@ -11,7 +11,7 @@ int previousTime = 0;
 bool isNewStunt = false;
 bool instantStunt = false;
 bool isMaster;
-bool isEnabled;
+
 
 void Main() {  }
 
@@ -34,6 +34,12 @@ float now()
     return Math::Round(Time::get_Now() / 1000);
 }
 
+void addShadow(int w, int h, string text, vec4 fillColor)
+{
+    nvg::FillColor(s_shadowColor);
+    nvg::Text(w, h, text);
+    nvg::FillColor(fillColor);
+}
 
 void Render()
 {
@@ -46,6 +52,7 @@ void Render()
         auto app = cast<CGameCtnApp>(GetApp());
         auto decorationName = app.RootMap.DecorationName;
         vec4 fillColor = (decorationName != "Night48" ? s_dayColor : s_nightColor);
+
         currentText = StuntText();
         if (previousText != currentText) 
         {
@@ -72,21 +79,34 @@ void Render()
         nvg::BeginPath();
         nvg::FontSize(Draw::GetWidth() / 45);
         nvg::FillColor(fillColor);
-        auto bounds = nvg::TextBounds(currentText);
+        vec2 bounds = nvg::TextBounds(currentText);
         // ty auris and chips for the .contains
         bool shouldStraightJump = s_stuntPoints or !currentStunt.Contains("StraightJump");
         if (shouldStraightJump and isNewStunt) 
         {
+            if (s_shadow) 
+            {
+                addShadow((Draw::GetWidth() / 2) - ((bounds.x / 2) - shadowOffset), (Draw::GetHeight() / 5) + shadowOffset, currentText, fillColor);
+            }
             nvg::Text((Draw::GetWidth() / 2) - (bounds.x / 2), Draw::GetHeight() / 5, currentText);
             if (s_stuntPoints) 
             {
                 bounds = nvg::TextBounds("+" + tostring(stuntPointsIncrease));
+                if (s_shadow) 
+                {
+                    addShadow((Draw::GetWidth() / 2) - (bounds.x / 2 - shadowOffset), (Draw::GetHeight() / 4) + shadowOffset, "+" + tostring(stuntPointsIncrease), fillColor);
+                }
+                nvg::FillColor(fillColor);
                 nvg::Text((Draw::GetWidth() / 2) - (bounds.x / 2), Draw::GetHeight() / 4, "+" + tostring(stuntPointsIncrease));
             }
         }
         if (s_stuntPoints) 
         {
             bounds = nvg::TextBounds(tostring(stuntPoints));
+            if (s_shadow) 
+            {
+                addShadow(((Draw::GetWidth()) - bounds.x) - ((Draw::GetWidth() / 20) - shadowOffset), (Draw::GetHeight() / 3) + shadowOffset, tostring(stuntPoints) + " Pts.", fillColor);
+            }
             nvg::Text(((Draw::GetWidth()) - bounds.x) - (Draw::GetWidth() / 20), Draw::GetHeight() / 3, tostring(stuntPoints) + " Pts.");
         }
         nvg::ClosePath();
